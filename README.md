@@ -35,12 +35,12 @@ collected 26 | passed 26 | failed 0 | skipped 0 | rerun 0 | 3.46s
 26 passed in 3.46s
 ```
 
-冒烟集 0.22 秒、全量 3.46 秒，差了 15 倍——这就是分级的意义：26 条里只有 4 条慢用例（真的在虚拟总线上收发报文），但它们占了 94% 的时间。
+冒烟集 0.22 秒、全量 3.46 秒，差 15 倍：26 条里只有 4 条在虚拟总线上收发报文，这 4 条占了 94% 的时间。
 
 ## 四个实现决定
 
-1. **重跑在 protocol 层做，不是在 call 层。** 用 `_pytest.runner.runtestprotocol` 把 setup / call / teardown 完整再跑一遍，而不是只重调测试函数——否则 fixture 里的临时状态（数据库连接、总线句柄）不会被重建，重跑等于自欺。代价是依赖了一个下划线开头的私有 API，pytest 大版本升级时得看一眼。
-2. **中间失败标成 `rerun`，不是 `failed`。** 否则终端会打「1 failed, 1 passed」，读的人以为一半挂了。标成 rerun 之后 pytest 自己就显示「1 passed, 1 rerun」，重跑次数一眼可见。
+1. **重跑走 protocol 层整轮。** 用 `_pytest.runner.runtestprotocol` 把 setup / call / teardown 完整再跑一遍，fixture 里的临时状态（数据库连接、总线句柄）会一起重建。代价是依赖了一个下划线开头的私有 API，pytest 大版本升级时得看一眼。
+2. **中间失败标成 `rerun`。** 标 failed 的终端输出是「1 failed, 1 passed」，读的人以为一半挂了；标 rerun 之后 pytest 显示「1 passed, 1 rerun」，重跑次数一眼可见。
 3. **门禁用退出码 2，不用 1。** 1 是 pytest 自己的「有用例失败」，2 留给「失败数超过阈值」——CI 里可以据此区分「测试红了」和「测试红了且超出容忍度」。
 4. **汇总只统计 call 阶段。** setup 失败计入 failed 但不计 slowest，否则 fixture 挂掉会把耗时榜污染成一片零。
 
