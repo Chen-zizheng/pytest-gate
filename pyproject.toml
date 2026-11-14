@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pytest-gate"
+version = "1.0.0"
+description = "pytest 用例分级、失败重跑、汇总门禁"
+requires-python = ">=3.9"
+dependencies = ["pytest>=7.0"]
+
+[project.entry-points.pytest11]
+gate = "pytest_gate.plugin"
+
+[tool.setuptools.packages.find]
+include = ["pytest_gate*"]
